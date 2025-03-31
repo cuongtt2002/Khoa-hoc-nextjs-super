@@ -3,7 +3,8 @@ import { formatCurrency, generateSlugUrl } from "@/lib/utils";
 import { DishListResType } from "@/schemaValidations/dish.schema";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
+import { setRequestLocale } from "next-intl/server";
 import envConfig, { Locale } from "@/config";
 import { htmlToTextForDescription } from "@/lib/server-utils";
 
@@ -30,6 +31,7 @@ export default async function Home(props: {
   params: Promise<{ locale: string }>;
 }) {
   const params = await props.params;
+
   const { locale } = params;
 
   setRequestLocale(locale);
@@ -52,7 +54,8 @@ export default async function Home(props: {
           src="/banner.png"
           width={400}
           height={200}
-          quality={100}
+          quality={80}
+          loading="lazy"
           alt="Banner"
           className="absolute top-0 left-0 w-full h-full object-cover"
         />
@@ -60,13 +63,11 @@ export default async function Home(props: {
           <h1 className="text-center text-xl sm:text-2xl md:text-4xl lg:text-5xl font-bold">
             {t("title")}
           </h1>
-          <p className="text-center text-sm sm:text-base mt-4">
-            Vị ngon, trọn khoảnh khắc
-          </p>
+          <p className="text-center text-sm sm:text-base mt-4">{t("slogan")}</p>
         </div>
       </section>
       <section className="space-y-10 py-16">
-        <h2 className="text-center text-2xl font-bold">Đa dạng các món ăn</h2>
+        <h2 className="text-center text-2xl font-bold">{t("h2")}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
           {dishList.map((dish) => (
             <Link
@@ -82,7 +83,8 @@ export default async function Home(props: {
                   src={dish.image}
                   width={150}
                   height={150}
-                  quality={100}
+                  quality={80}
+                  loading="lazy"
                   alt={dish.name}
                   className="object-cover w-[150px] h-[150px] rounded-md"
                 />

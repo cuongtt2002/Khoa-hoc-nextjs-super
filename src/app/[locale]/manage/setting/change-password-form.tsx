@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
 import { useForm } from "react-hook-form";
 import {
   ChangePasswordBody,
@@ -13,7 +12,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useChangePasswordMutation } from "@/queries/useAccount";
 import { toast } from "@/components/ui/use-toast";
-import { handleErrorApi } from "@/lib/utils";
+import {
+  handleErrorApi,
+  setAccessTokenToLocalStorage,
+  setRefreshTokenToLocalStorage,
+} from "@/lib/utils";
 
 export default function ChangePasswordForm() {
   const changePasswordMutation = useChangePasswordMutation();
@@ -25,11 +28,12 @@ export default function ChangePasswordForm() {
       confirmPassword: "",
     },
   });
-
   const onSubmit = async (data: ChangePasswordBodyType) => {
     if (changePasswordMutation.isPending) return;
     try {
       const result = await changePasswordMutation.mutateAsync(data);
+      setAccessTokenToLocalStorage(result.payload.data.accessToken);
+      setRefreshTokenToLocalStorage(result.payload.data.refreshToken);
       toast({
         description: result.payload.message,
       });
@@ -40,6 +44,7 @@ export default function ChangePasswordForm() {
       });
     }
   };
+
   const reset = () => {
     form.reset();
   };
@@ -67,11 +72,11 @@ export default function ChangePasswordForm() {
                     <div className="grid gap-3">
                       <Label htmlFor="oldPassword">Mật khẩu cũ</Label>
                       <Input
+                        autoComplete="current-password"
                         id="oldPassword"
                         type="password"
                         className="w-full"
                         {...field}
-                        autoComplete="current-password"
                       />
                       <FormMessage />
                     </div>
