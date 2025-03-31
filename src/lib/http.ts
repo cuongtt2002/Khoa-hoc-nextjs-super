@@ -1,8 +1,14 @@
-import { normalizePath } from "@/lib/utils";
+import envConfig, { defaultLocale } from "@/config";
+import {
+  getAccessTokenFromLocalStorage,
+  normalizePath,
+  removeTokensFromLocalStorage,
+  setAccessTokenToLocalStorage,
+  setRefreshTokenToLocalStorage,
+} from "@/lib/utils";
 import { LoginResType } from "@/schemaValidations/auth.schema";
-import { redirect } from "next/navigation";
-import envConfig from "@/config";
-
+import { redirect } from "@/i18n/routing";
+import Cookies from "js-cookie";
 type CustomOptions = Omit<RequestInit, "method"> & {
   baseUrl?: string | undefined;
 };
@@ -77,7 +83,7 @@ const request = async <Response>(
           "Content-Type": "application/json",
         };
   if (isClient) {
-    const accessToken = localStorage.getItem("accessToken");
+    const accessToken = getAccessTokenFromLocalStorage();
     if (accessToken) {
       baseHeaders.Authorization = `Bearer ${accessToken}`;
     }
@@ -105,6 +111,7 @@ const request = async <Response>(
     status: res.status,
     payload,
   };
+
   // Interceptor là nời chúng ta xử lý request và response trước khi trả về cho phía component
   if (!res.ok) {
     if (res.status === ENTITY_ERROR_STATUS) {
@@ -116,6 +123,7 @@ const request = async <Response>(
       );
     } else if (res.status === AUTHENTICATION_ERROR_STATUS) {
       if (isClient) {
+        const locale = Cookies.get("NEXT_LOCALE");
         if (!clientLogoutRequest) {
           clientLogoutRequest = fetch("/api/auth/logout", {
             method: "POST",
@@ -128,14 +136,13 @@ const request = async <Response>(
             await clientLogoutRequest;
           } catch (error) {
           } finally {
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("refreshToken");
+            removeTokensFromLocalStorage();
             clientLogoutRequest = null;
             // Redirect về trang login có thể dẫn đến loop vô hạn
             // Nếu không không được xử lý đúng cách
             // Vì nếu rơi vào trường hợp tại trang Login, chúng ta có gọi các API cần access token
             // Mà access token đã bị xóa thì nó lại nhảy vào đây, và cứ thế nó sẽ bị lặp
-            location.href = "/login";
+            location.href = `/${locale}/login`;
           }
         }
       } else {
@@ -144,7 +151,11 @@ const request = async <Response>(
         const accessToken = (options?.headers as any)?.Authorization.split(
           "Bearer "
         )[1];
-        redirect(`/logout?accessToken=${accessToken}`);
+        const locale = Cookies.get("NEXT_LOCALE");
+        redirect({
+          href: `/login?accessToken=${accessToken}`,
+          locale: locale ?? defaultLocale,
+        });
       }
     } else {
       throw new HttpError(data);
@@ -153,13 +164,21 @@ const request = async <Response>(
   // Đảm bảo logic dưới đây chỉ chạy ở phía client (browser)
   if (isClient) {
     const normalizeUrl = normalizePath(url);
-    if (normalizeUrl === "api/auth/login") {
+    if (["api/auth/login", "api/guest/auth/login"].includes(normalizeUrl)) {
       const { accessToken, refreshToken } = (payload as LoginResType).data;
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
-    } else if (normalizeUrl === "api/auth/logout") {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
+      setAccessTokenToLocalStorage(accessToken);
+      setRefreshTokenToLocalStorage(refreshToken);
+    } else if ("api/auth/token" === normalizeUrl) {
+      const { accessToken, refreshToken } = payload as {
+        accessToken: string;
+        refreshToken: string;
+      };
+      setAccessTokenToLocalStorage(accessToken);
+      setRefreshTokenToLocalStorage(refreshToken);
+    } else if (
+      ["api/auth/logout", "api/guest/auth/logout"].includes(normalizeUrl)
+    ) {
+      removeTokensFromLocalStorage();
     }
   }
   return data;
