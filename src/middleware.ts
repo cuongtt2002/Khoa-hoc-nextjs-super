@@ -4,7 +4,9 @@ import type { NextRequest } from "next/server";
 import jwt from "jsonwebtoken";
 import { TokenPayload } from "@/types/jwt.types";
 import createMiddleware from "next-intl/middleware";
-import { locales, defaultLocale } from "@/config";
+import { defaultLocale } from "@/config";
+import { routing } from "./i18n/routing";
+
 const decodeToken = (token: string) => {
   return jwt.decode(token) as TokenPayload;
 };
@@ -14,15 +16,13 @@ const guestPaths = ["/vi/guest", "/en/guest"];
 const onlyOwnerPaths = ["/vi/manage/accounts", "/en/manage/accounts"];
 const privatePaths = [...managePaths, ...guestPaths];
 const unAuthPaths = ["/vi/login", "/en/login"];
+const loginPaths = ["/vi/login", "/en/login"];
 
 // This function can be marked `async` if using `await` inside
 export function middleware(request: NextRequest) {
-  const handleI18nRouting = createMiddleware({
-    locales,
-    defaultLocale,
-  });
+  const handleI18nRouting = createMiddleware(routing);
   const response = handleI18nRouting(request);
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
   // pathname: /manage/dashboard
   const accessToken = request.cookies.get("accessToken")?.value;
   const refreshToken = request.cookies.get("refreshToken")?.value;
@@ -35,11 +35,16 @@ export function middleware(request: NextRequest) {
     // response.headers.set('x-middleware-rewrite', url.toString())
     // return response
   }
-
   // 2. Trường hợp đã đăng nhập
   if (refreshToken) {
     // 2.1 Nếu cố tình vào trang login sẽ redirect về trang chủ
     if (unAuthPaths.some((path) => pathname.startsWith(path))) {
+      if (
+        loginPaths.some((path) => pathname.startsWith(path)) &&
+        searchParams.get("accessToken")
+      ) {
+        return response;
+      }
       return NextResponse.redirect(new URL(`/${locale}`, request.url));
       // response.headers.set(
       //   'x-middleware-rewrite',

@@ -1,16 +1,20 @@
-import type { Metadata } from "next";
 import { Inter as FontSans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
 import AppProvider from "@/components/app-provider";
-import { Locale, NextIntlClientProvider } from "next-intl";
+import { NextIntlClientProvider } from "next-intl";
 import {
   getMessages,
   getTranslations,
   setRequestLocale,
 } from "next-intl/server";
+import { Locale } from "@/config";
+import NextTopLoader from "nextjs-toploader";
+import Footer from "@/components/footer";
+import { baseOpenGraph } from "@/shared-metadata";
+import GoogleTag from "@/components/google-tag";
 import { routing } from "@/i18n/routing";
 import { notFound } from "next/navigation";
 
@@ -31,6 +35,12 @@ export async function generateMetadata(props: {
       template: `%s | ${t("title")}`,
       default: t("defaultTitle"),
     },
+    openGraph: {
+      ...baseOpenGraph,
+    },
+    // other: {
+    //   'google-site-verification': 'KKr5Sgn6rrXntMUp1nDIoQR7mJQujE4BExrlgcFvGTg'
+    // }
   };
 }
 export function generateStaticParams() {
@@ -63,6 +73,7 @@ export default async function RootLayout(
           fontSans.variable
         )}
       >
+        <NextTopLoader showSpinner={false} color="hsl(var(--foreground))" />
         <NextIntlClientProvider messages={messages}>
           <AppProvider>
             <ThemeProvider
@@ -72,11 +83,12 @@ export default async function RootLayout(
               disableTransitionOnChange
             >
               {children}
-
+              <Footer />
               <Toaster />
             </ThemeProvider>
           </AppProvider>
         </NextIntlClientProvider>
+        <GoogleTag />
       </body>
     </html>
   );

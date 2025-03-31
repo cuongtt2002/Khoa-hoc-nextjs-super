@@ -1,10 +1,14 @@
 import dishApiRequest from "@/apiRequests/dish";
-import { formatCurrency, generateSlugUrl } from "@/lib/utils";
+import {
+  formatCurrency,
+  generateSlugUrl,
+  htmlToTextForDescription,
+} from "@/lib/utils";
 import { DishListResType } from "@/schemaValidations/dish.schema";
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { Locale } from "@/config";
+import envConfig, { Locale } from "@/config";
 
 export async function generateMetadata(props: {
   params: Promise<{ locale: Locale }>;
@@ -14,10 +18,14 @@ export async function generateMetadata(props: {
   const { locale } = params;
 
   const t = await getTranslations({ locale, namespace: "HomePage" });
+  const url = envConfig.NEXT_PUBLIC_URL + `/${locale}`;
 
   return {
     title: t("title"),
-    description: t("description"),
+    description: htmlToTextForDescription(t("description")),
+    alternates: {
+      canonical: url,
+    },
   };
 }
 

@@ -6,13 +6,14 @@ import { twMerge } from "tailwind-merge";
 import jwt from "jsonwebtoken";
 import authApiRequest from "@/apiRequests/auth";
 import { DishStatus, OrderStatus, Role, TableStatus } from "@/constants/type";
-import envConfig from "@/config";
+import envConfig, { defaultLocale } from "@/config";
 import { TokenPayload } from "@/types/jwt.types";
 import guestApiRequest from "@/apiRequests/guest";
 import { format } from "date-fns";
 import { BookX, CookingPot, HandCoins, Loader, Truck } from "lucide-react";
 import { io } from "socket.io-client";
 import slugify from "slugify";
+import { convert } from "html-to-text";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -172,7 +173,11 @@ export const getTableLink = ({
   tableNumber: number;
 }) => {
   return (
-    envConfig.NEXT_PUBLIC_URL + "/tables/" + tableNumber + "?token=" + token
+    envConfig.NEXT_PUBLIC_URL +
+    `/${defaultLocale}/tables/` +
+    tableNumber +
+    "?token=" +
+    token
   );
 };
 
@@ -239,4 +244,12 @@ export const generateSlugUrl = ({ name, id }: { name: string; id: number }) => {
 
 export const getIdFromSlugUrl = (slug: string) => {
   return Number(slug.split("-i.")[1]);
+};
+
+export const htmlToTextForDescription = (html: string) => {
+  return convert(html, {
+    limits: {
+      maxInputLength: 140,
+    },
+  });
 };

@@ -1,6 +1,11 @@
 import dishApiRequest from "@/apiRequests/dish";
 import DishDetail from "@/app/[locale]/(public)/dishes/[slug]/dish-detail";
-import { generateSlugUrl, getIdFromSlugUrl, wrapServerApi } from "@/lib/utils";
+import {
+  generateSlugUrl,
+  getIdFromSlugUrl,
+  htmlToTextForDescription,
+  wrapServerApi,
+} from "@/lib/utils";
 import { baseOpenGraph } from "@/shared-metadata";
 import { Metadata } from "next";
 import envConfig, { Locale } from "@/config";
@@ -41,7 +46,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
   return {
     title: dish.name,
-    description: dish.description,
+    description: htmlToTextForDescription(dish.description),
     openGraph: {
       ...baseOpenGraph,
       title: dish.name,
@@ -58,7 +63,6 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     },
   };
 }
-
 export default async function DishPage(props: {
   params: Promise<{
     slug: string;

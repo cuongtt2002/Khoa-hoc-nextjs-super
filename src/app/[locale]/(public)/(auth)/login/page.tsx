@@ -1,5 +1,6 @@
 import LoginForm from "@/app/[locale]/(public)/(auth)/login/login-form";
-import { Locale } from "@/config";
+import Logout from "@/app/[locale]/(public)/(auth)/login/logout";
+import envConfig, { Locale } from "@/config";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 export async function generateMetadata(props: {
@@ -10,10 +11,14 @@ export async function generateMetadata(props: {
   const { locale } = params;
 
   const t = await getTranslations({ locale, namespace: "Login" });
+  const url = envConfig.NEXT_PUBLIC_URL + `/${locale}/login`;
 
   return {
     title: t("title"),
     description: t("description"),
+    alternates: {
+      canonical: url,
+    },
   };
 }
 
@@ -28,6 +33,7 @@ export default async function Login(props: {
   return (
     <div className="min-h-screen flex items-center justify-center">
       <LoginForm />
+      <Logout />
     </div>
   );
 }
