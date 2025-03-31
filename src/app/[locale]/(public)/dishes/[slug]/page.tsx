@@ -1,17 +1,13 @@
 import dishApiRequest from "@/apiRequests/dish";
 import DishDetail from "@/app/[locale]/(public)/dishes/[slug]/dish-detail";
-import {
-  generateSlugUrl,
-  getIdFromSlugUrl,
-  htmlToTextForDescription,
-  wrapServerApi,
-} from "@/lib/utils";
+import { generateSlugUrl, getIdFromSlugUrl, wrapServerApi } from "@/lib/utils";
 import { baseOpenGraph } from "@/shared-metadata";
 import { Metadata } from "next";
 import envConfig, { Locale } from "@/config";
 import { getTranslations } from "next-intl/server";
 
 import { cache } from "react";
+import { htmlToTextForDescription } from "@/lib/server-utils";
 
 const getDetail = cache((id: number) =>
   wrapServerApi(() => dishApiRequest.getDish(id))
